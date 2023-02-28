@@ -1,10 +1,9 @@
 const express = require('express')
+const jwt = require('jsonwebtoken')
+
 require('./db/new mon')
-const User = require('./models/user')
-const Task = require('./models/task')
 const userRouter = require('./routers/user')
 const taskRouter = require('./routers/task')
-
 const app = express()
 const port = process.env.PORT || 3000
 
@@ -12,21 +11,40 @@ app.use(express.json())
 app.use(userRouter)
 app.use(taskRouter)
 
-app.listen(port, () =>{
-    console.log('Server running on port ' + port);
-})
+// app.use((req,res, next) => {
+//    if(req.method === 'GET'){
+//     res.send('GET request are disabled')
+//    }else{
+//     next()
+//    }
+// })
 
-const bcrypt = require('bcrypt');
+// app.use((req, res, next) => {
+//     res.status(503).send('Site is currently down. Check back soon')
+// })
+
+
+// const bcrypt = require('bcrypt');
 
 const myFunction =  async () =>{
-    const password = 'QWer12345!'
-    const hashedPassword = await bcrypt.hash(password, 8)
+   try {
+    const token = jwt.sign({_id: 'abc123'}, 'thisisjsontoken', {expiresIn: '7 days'})
+    console.log(token);
 
-    console.log(password);
-    console.log(hashedPassword);
-
-    const isMatch = await bcrypt.compare('wer12345!', hashedPassword)
-    console.log(isMatch);
+    const data = jwt.verify(token, 'thisisjsontoken')
+    console.log(data);
+   } catch (error) {
+        console.log(error);
+   }
 }
 
 myFunction()
+
+app.listen(port, () =>{
+    console.log('Server running on port ' + port);
+
+})
+
+
+// const User = require('./models/user')
+// const Task = require('./models/task')
