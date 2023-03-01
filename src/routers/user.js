@@ -1,4 +1,6 @@
 const express = require('express');
+const  multer = require('multer');
+const sharp = require('sharp');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
@@ -95,4 +97,50 @@ router.delete('/users/me', auth, async (req, res) => {
     }
 })
 
+const upload = multer({
+    dest: 'avatars',
+    limits:{
+        filesize: 1000000
+    },
+    fileFilter(req, file, cb){
+        if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
+            return cb(new Error('Please upload an Image'))
+        }
+        cb(undefined, true)
+        // cb(new Error('File must be PDF'))
+        // cb(undefined, true)
+        // cb(undefined, false)
+    }
+})
+ 
+router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+    const buffer = await sharp(req.file.buffer).resize({width : 250, height: 250}).png().toBuffer()
+    req.user.avatar = buffer 
+    await req.user.save()
+    res.send()
+},(error, req, res, next) => {
+    res.send(400).send({ error: error.message })
+}    
+)
+
+router.delete('/user/me/avatar', auth, async(req, res) => {
+    req.user.avatar = undefined
+    await req.user.save()
+    res.send()
+})  
+
+router.get('/users/:id/avatar', async(req, res) => {
+    try {
+        const user = await User.findById(req.user.id)
+
+        if(!user || !user.avatar ){
+            throw new Error()
+        }
+
+        res.set('Content-Type', 'image/png')
+        res.send(user.avatar)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
 module.exports = router
